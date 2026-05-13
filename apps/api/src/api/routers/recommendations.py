@@ -1,0 +1,7 @@
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/")
+def list_recommendations():
+    return {"message": "TODO: implement recommendations endpoints"}

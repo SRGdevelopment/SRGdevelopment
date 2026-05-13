@@ -1,0 +1,3 @@
+Extract only factual, testable sports betting claims.
+Return strict JSON with key `claims`.
+Each claim requires: claim_text, entity_tags, metric, time_horizon, league, confidence_extract.
