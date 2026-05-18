@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sports Bet Copilot Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hero">
+        <p class="eyebrow">Preview</p>
+        <h1>Sports Bet Copilot</h1>
+        <p class="intro">
+          A lightweight preview for the FastAPI betting-analysis backend in this repository.
+        </p>
+      </section>
+
+      <section class="panel">
+        <label for="api-base-url">API base URL</label>
+        <div class="row">
+          <input id="api-base-url" type="url" value="http://localhost:8000" />
+          <button id="refresh-button" type="button">Refresh</button>
+        </div>
+        <p class="hint">Use the Docker preview and then open <code>http://localhost:8080</code>.</p>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Health</h2>
+          <pre id="health-output">Loading…</pre>
+        </article>
+        <article class="panel">
+          <h2>Live markets</h2>
+          <ul id="markets-output" class="list"></ul>
+        </article>
+        <article class="panel">
+          <h2>Top recommendations</h2>
+          <ul id="recommendations-output" class="list"></ul>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Quick links</h2>
+        <ul class="list">
+          <li><a id="docs-link" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">API docs</a></li>
+          <li><a id="openapi-link" href="http://localhost:8000/openapi.json" target="_blank" rel="noreferrer">OpenAPI schema</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

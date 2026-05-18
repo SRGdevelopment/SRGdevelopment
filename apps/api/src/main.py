@@ -1,7 +1,17 @@
 from fastapi import FastAPI
-from .api.routers import health, markets, recommendations, combos, media, claims, integrity
+from fastapi.middleware.cors import CORSMiddleware
+
+from .api.routers import claims, combos, health, integrity, markets, media, recommendations
+from .core.config import settings
 
 app = FastAPI(title="Sports Bet Copilot API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allow_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(health.router)
 app.include_router(markets.router, prefix="/markets", tags=["markets"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
