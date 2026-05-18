@@ -1,7 +1,12 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+from ...schemas.recommendations import TopRecommendationsResponse
+from ...services.recommendation_service import RecommendationService
 
-@router.get("/")
-def list_recommendations():
-    return {"message": "TODO: implement recommendations endpoints"}
+router = APIRouter()
+service = RecommendationService()
+
+
+@router.get('/top', response_model=TopRecommendationsResponse)
+def list_top_recommendations():
+    return TopRecommendationsResponse(recommendations=service.top_recommendations())
