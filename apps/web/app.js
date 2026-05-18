@@ -10,13 +10,31 @@ function normalizeBaseUrl(value) {
   return value.replace(/\/+$/, "");
 }
 
+function getSafeBaseUrl(value) {
+  try {
+    const url = new URL(normalizeBaseUrl(value || "http://localhost:8000"));
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("Unsupported protocol");
+    }
+    return url.origin;
+  } catch {
+    return "http://localhost:8000";
+  }
+}
+
 function renderList(container, items, formatter) {
-  container.innerHTML = "";
+  container.replaceChildren();
   for (const item of items) {
     const entry = document.createElement("li");
     entry.textContent = formatter(item);
     container.appendChild(entry);
   }
+}
+
+function renderStatus(container, message) {
+  const entry = document.createElement("li");
+  entry.textContent = message;
+  container.replaceChildren(entry);
 }
 
 async function fetchJson(url) {
@@ -28,13 +46,14 @@ async function fetchJson(url) {
 }
 
 async function refreshPreview() {
-  const baseUrl = normalizeBaseUrl(apiBaseUrlInput.value || "http://localhost:8000");
+  const baseUrl = getSafeBaseUrl(apiBaseUrlInput.value);
+  apiBaseUrlInput.value = baseUrl;
   docsLink.href = `${baseUrl}/docs`;
   openapiLink.href = `${baseUrl}/openapi.json`;
 
   healthOutput.textContent = "Loading…";
-  marketsOutput.innerHTML = "<li>Loading…</li>";
-  recommendationsOutput.innerHTML = "<li>Loading…</li>";
+  renderStatus(marketsOutput, "Loading…");
+  renderStatus(recommendationsOutput, "Loading…");
 
   try {
     const [health, markets, recommendations] = await Promise.all([
@@ -58,8 +77,8 @@ async function refreshPreview() {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     healthOutput.textContent = `Unable to load preview data: ${message}`;
-    marketsOutput.innerHTML = "<li>Unavailable</li>";
-    recommendationsOutput.innerHTML = "<li>Unavailable</li>";
+    renderStatus(marketsOutput, "Unavailable");
+    renderStatus(recommendationsOutput, "Unavailable");
   }
 }
 
