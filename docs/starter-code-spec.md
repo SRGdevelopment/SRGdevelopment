@@ -104,6 +104,7 @@ apps/worker/src/
 
 ```env
 APP_ENV=dev
+APP_VERTICAL=sports
 DATABASE_URL=postgresql+psycopg://...
 REDIS_URL=redis://redis:6379/0
 OPENAI_API_KEY=...
