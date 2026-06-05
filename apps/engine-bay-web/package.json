@@ -1,0 +1,19 @@
+{
+  "name": "@srg/engine-bay-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "validate:assets": "python3 ../../packages/engine-bay-assets/scripts/validate_manifest.py public/assets/sample-engine-bay/manifest.json"
+  },
+  "dependencies": {
+    "@types/three": "^0.165.0",
+    "three": "^0.165.0",
+    "vite": "^5.4.0",
+    "typescript": "^5.5.4"
+  },
+  "devDependencies": {}
+}
