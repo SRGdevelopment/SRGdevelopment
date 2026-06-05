@@ -27,8 +27,13 @@ def validate_manifest(path: Path) -> list[str]:
     errors: list[str] = []
     try:
         manifest = json.loads(path.read_text())
+    except OSError as exc:
+        return [f"Cannot read file: {exc}"]
     except json.JSONDecodeError as exc:
         return [f"Invalid JSON: {exc}"]
+
+    if not isinstance(manifest, dict):
+        return ["Manifest must be a JSON object"]
 
     required = [
         "manifest_version",
@@ -50,6 +55,13 @@ def validate_manifest(path: Path) -> list[str]:
     require(manifest.get("up_axis") in VALID_UP_AXIS, "up_axis must be Y or Z", errors)
     require(isinstance(manifest.get("model_url"), str) and bool(manifest.get("model_url")), "model_url must be a non-empty string", errors)
     require(isinstance(manifest.get("lods"), list), "lods must be an array", errors)
+    if isinstance(manifest.get("lods"), list):
+        for lod_index, lod_item in enumerate(manifest["lods"]):
+            require(
+                isinstance(lod_item, str) and bool(lod_item),
+                f"lods[{lod_index}] must be a non-empty string URL",
+                errors,
+            )
     require(isinstance(manifest.get("parts"), list) and len(manifest.get("parts", [])) > 0, "parts must be a non-empty array", errors)
 
     seen_ids: set[str] = set()

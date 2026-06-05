@@ -1,7 +1,7 @@
-fastapi<0.100
-pydantic<2
+fastapi
+pydantic>=2,<3
 sqlalchemy>=2,<3
-httpx<0.25
+httpx
 pytest
 ruff
 uvicorn

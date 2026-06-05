@@ -1,7 +1,9 @@
 import './styles.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import type { EngineBayAssetManifest, EngineBayPart } from './types';
 
 const MANIFEST_URL = '/assets/sample-engine-bay/manifest.json';
@@ -124,33 +126,78 @@ function buildFallbackPart(part: EngineBayPart) {
 
 function renderPartList(parts: EngineBayPart[]) {
   const needle = search.value.trim().toLowerCase();
-  const filtered = parts.filter((part) => [part.name, part.sku, part.oem_number, part.category].some((value) => value.toLowerCase().includes(needle)));
-  partList.innerHTML = filtered.map((part) => `
-    <button class="part-card ${selectedPart?.id === part.id ? 'active' : ''}" data-part-id="${part.id}" type="button">
-      <strong>${part.name}</strong>
-      <span class="meta">${part.sku} · ${part.oem_number}<br />${part.category}</span>
-    </button>
-  `).join('');
+  const filtered = parts.filter((part) =>
+    [part.name, part.sku, part.oem_number, part.category].some((v) => v.toLowerCase().includes(needle)),
+  );
+  const nodes = filtered.map((part) => {
+    const btn = document.createElement('button');
+    btn.className = `part-card${selectedPart?.id === part.id ? ' active' : ''}`;
+    btn.dataset.partId = part.id;
+    btn.type = 'button';
+    const strong = document.createElement('strong');
+    strong.textContent = part.name;
+    const meta = document.createElement('span');
+    meta.className = 'meta';
+    meta.textContent = `${part.sku} · ${part.oem_number}`;
+    meta.append(document.createElement('br'), part.category);
+    btn.append(strong, meta);
+    return btn;
+  });
+  partList.replaceChildren(...nodes);
 }
 
 function renderDetails(part: EngineBayPart | null) {
   if (!part) {
-    details.innerHTML = '<h2>No part selected</h2><p class="meta">Click a part or choose one from the list.</p>';
+    const h2 = document.createElement('h2');
+    h2.textContent = 'No part selected';
+    const p = document.createElement('p');
+    p.className = 'meta';
+    p.textContent = 'Click a part or choose one from the list.';
+    details.replaceChildren(h2, p);
     return;
   }
-  details.innerHTML = `
-    <h2>${part.name}</h2>
-    <p class="meta">SKU: ${part.sku}<br />OEM: ${part.oem_number}<br />Category: ${part.category}</p>
-    <h3>Service data</h3>
-    <p>Torque: ${part.torque_spec_nm ?? 'N/A'} Nm</p>
-    <ul class="notes">${part.service_notes.map((note) => `<li>${note}</li>`).join('')}</ul>
-    <p><a href="${part.documentation_url}">Open documentation</a></p>
-    <h3>Annotations</h3>
-    <p class="meta">Damage/issue annotation hooks are wired at the API contract level.</p>
-  `;
+
+  const h2 = document.createElement('h2');
+  h2.textContent = part.name;
+
+  const metaP = document.createElement('p');
+  metaP.className = 'meta';
+  metaP.textContent = `SKU: ${part.sku}`;
+  metaP.append(document.createElement('br'), `OEM: ${part.oem_number}`, document.createElement('br'), `Category: ${part.category}`);
+
+  const serviceH3 = document.createElement('h3');
+  serviceH3.textContent = 'Service data';
+
+  const torqueP = document.createElement('p');
+  torqueP.textContent = `Torque: ${part.torque_spec_nm ?? 'N/A'} Nm`;
+
+  const notesList = document.createElement('ul');
+  notesList.className = 'notes';
+  for (const note of part.service_notes) {
+    const li = document.createElement('li');
+    li.textContent = note;
+    notesList.append(li);
+  }
+
+  const docP = document.createElement('p');
+  const link = document.createElement('a');
+  const rawUrl = part.documentation_url;
+  link.href = /^https?:\/\//i.test(rawUrl) || rawUrl.startsWith('/') ? rawUrl : '#';
+  link.textContent = 'Open documentation';
+  docP.append(link);
+
+  const annotH3 = document.createElement('h3');
+  annotH3.textContent = 'Annotations';
+
+  const annotP = document.createElement('p');
+  annotP.className = 'meta';
+  annotP.textContent = 'Damage/issue annotation hooks are wired at the API contract level.';
+
+  details.replaceChildren(h2, metaP, serviceH3, torqueP, notesList, docP, annotH3, annotP);
 }
 
 function selectPart(partId: string | null) {
+  if (!manifest) return;
   selectedPart = manifest.parts.find((part) => part.id === partId) ?? null;
   for (const [id, mesh] of partMeshes) {
     const material = mesh.material as THREE.MeshStandardMaterial;
@@ -169,6 +216,7 @@ function selectPart(partId: string | null) {
 }
 
 function updateExplodedState() {
+  if (!manifest) return;
   for (const part of manifest.parts) {
     const mesh = partMeshes.get(part.id);
     const base = basePositions.get(part.id);
@@ -191,15 +239,34 @@ async function loadManifest() {
   if (!response.ok) throw new Error(`Manifest failed: ${response.status}`);
   manifest = await response.json() as EngineBayAssetManifest;
   loading.textContent = 'Loading model…';
+
+  const loader = new GLTFLoader();
+  if (manifest.draco_compressed) {
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('/draco/');
+    loader.setDRACOLoader(draco);
+  }
+  if (manifest.meshopt_compressed) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    loader.setMeshoptDecoder(MeshoptDecoder as any);
+  }
+
   try {
-    await new GLTFLoader().loadAsync(manifest.model_url);
-    // Real GLB assets should carry part IDs in node userData/name. This scaffold
-    // keeps procedural proxies active so selection and UX can be reviewed before
-    // production CAD assets are ready.
+    const gltf = await loader.loadAsync(manifest.model_url);
+    scene.add(gltf.scene);
+    // Map any GLB nodes that carry a partId in userData to the selection layer
+    gltf.scene.traverse((node) => {
+      if (node instanceof THREE.Mesh && node.userData.partId) {
+        const id = String(node.userData.partId);
+        partMeshes.set(id, node);
+        basePositions.set(id, node.position.clone());
+      }
+    });
   } catch {
     fallback.hidden = false;
+    manifest.parts.forEach(buildFallbackPart);
   }
-  manifest.parts.forEach(buildFallbackPart);
+
   renderPartList(manifest.parts);
   loading.hidden = true;
 }
@@ -235,7 +302,7 @@ partList.addEventListener('click', (event) => {
   const card = (event.target as HTMLElement).closest<HTMLElement>('[data-part-id]');
   if (card) selectPart(card.dataset.partId ?? null);
 });
-search.addEventListener('input', () => renderPartList(manifest.parts));
+search.addEventListener('input', () => { if (manifest) renderPartList(manifest.parts); });
 
 function bindToggle(id: string, handler: (pressed: boolean) => void) {
   document.querySelector<HTMLButtonElement>(`#${id}`)!.addEventListener('click', (event) => {
@@ -284,9 +351,34 @@ function animate() {
   }
 }
 
+function restoreHashView() {
+  const hash = location.hash;
+  if (!hash.startsWith('#view=')) return;
+  try {
+    const view = JSON.parse(decodeURIComponent(hash.slice(6))) as {
+      camera?: number[];
+      target?: number[];
+      selectedPart?: string | null;
+    };
+    if (Array.isArray(view.camera) && view.camera.length === 3) {
+      camera.position.set(view.camera[0], view.camera[1], view.camera[2]);
+    }
+    if (Array.isArray(view.target) && view.target.length === 3) {
+      controls.target.set(view.target[0], view.target[1], view.target[2]);
+    }
+    if (typeof view.selectedPart === 'string') {
+      selectPart(view.selectedPart);
+    }
+  } catch {
+    // Ignore malformed hash
+  }
+}
+
 window.addEventListener('resize', resize);
 resize();
-void loadManifest().catch((error) => {
-  loading.textContent = `Unable to load engine bay: ${error instanceof Error ? error.message : 'unknown error'}`;
-});
+void loadManifest()
+  .then(() => { restoreHashView(); })
+  .catch((error) => {
+    loading.textContent = `Unable to load engine bay: ${error instanceof Error ? error.message : 'unknown error'}`;
+  });
 animate();
