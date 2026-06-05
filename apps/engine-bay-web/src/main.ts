@@ -247,8 +247,10 @@ async function loadManifest() {
     loader.setDRACOLoader(draco);
   }
   if (manifest.meshopt_compressed) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    loader.setMeshoptDecoder(MeshoptDecoder as any);
+    loader.setMeshoptDecoder(
+      // @types/three does not yet expose MeshoptDecoder; suppress the mismatch.
+      MeshoptDecoder as Parameters<typeof loader.setMeshoptDecoder>[0],
+    );
   }
 
   try {
@@ -302,7 +304,7 @@ partList.addEventListener('click', (event) => {
   const card = (event.target as HTMLElement).closest<HTMLElement>('[data-part-id]');
   if (card) selectPart(card.dataset.partId ?? null);
 });
-search.addEventListener('input', () => { if (manifest) renderPartList(manifest.parts); });
+search.addEventListener('input', () => renderPartList(manifest?.parts ?? []));
 
 function bindToggle(id: string, handler: (pressed: boolean) => void) {
   document.querySelector<HTMLButtonElement>(`#${id}`)!.addEventListener('click', (event) => {
@@ -355,7 +357,9 @@ function restoreHashView() {
   const hash = location.hash;
   if (!hash.startsWith('#view=')) return;
   try {
-    const view = JSON.parse(decodeURIComponent(hash.slice(6))) as {
+    const raw = decodeURIComponent(hash.slice(6));
+    if (raw.length > 2048) return; // guard against oversized payloads
+    const view = JSON.parse(raw) as {
       camera?: number[];
       target?: number[];
       selectedPart?: string | null;
