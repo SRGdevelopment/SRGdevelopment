@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://srg.dev/schemas/engine-bay-asset-manifest.schema.json",
+  "title": "Engine Bay Asset Manifest",
+  "type": "object",
+  "required": ["manifest_version", "assembly_id", "revision", "units", "up_axis", "model_url", "draco_compressed", "meshopt_compressed", "texture_format", "lods", "parts"],
+  "properties": {
+    "manifest_version": { "type": "string" },
+    "assembly_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "string", "minLength": 1 },
+    "units": { "enum": ["meter", "millimeter", "centimeter", "inch"] },
+    "up_axis": { "enum": ["Y", "Z"] },
+    "model_url": { "type": "string", "minLength": 1 },
+    "draco_compressed": { "type": "boolean" },
+    "meshopt_compressed": { "type": "boolean" },
+    "texture_format": { "type": "string", "minLength": 1 },
+    "lods": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "sku", "oem_number", "category", "documentation_url", "position", "exploded_offset", "bounding_radius"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_\\-]+$" },
+          "name": { "type": "string", "minLength": 1 },
+          "sku": { "type": "string", "minLength": 1 },
+          "oem_number": { "type": "string", "minLength": 1 },
+          "category": { "type": "string", "minLength": 1 },
+          "parent_id": { "type": ["string", "null"] },
+          "documentation_url": { "type": "string", "minLength": 1 },
+          "torque_spec_nm": { "type": ["number", "null"], "minimum": 0 },
+          "service_notes": { "type": "array", "items": { "type": "string" } },
+          "position": { "$ref": "#/$defs/vector3" },
+          "exploded_offset": { "$ref": "#/$defs/vector3" },
+          "bounding_radius": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "vector3": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    }
+  }
+}
