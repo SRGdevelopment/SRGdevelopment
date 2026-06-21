@@ -1,3 +1,3 @@
 # Web App
 
-Placeholder for the Sports Bet Copilot frontend app.
+Placeholder for the Kalshi sports frontend app.

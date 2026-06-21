@@ -1,4 +1,4 @@
-# Starter Code Spec: Sports Bet Copilot
+# Starter Code Spec: Kalshi Sports App
 
 ## Monorepo Layout
 
