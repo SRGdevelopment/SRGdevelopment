@@ -8,7 +8,7 @@ from .api.routers import markets
 from .api.routers import media
 from .api.routers import recommendations
 
-app = FastAPI(title="Kalshi Sports App API")
+app = FastAPI(title="Kalshi Sports API")
 app.include_router(health.router)
 app.include_router(markets.router, prefix="/markets", tags=["markets"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])

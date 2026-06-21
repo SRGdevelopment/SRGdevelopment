@@ -28,7 +28,7 @@ def test_live_markets_endpoint():
     )
 
 
-def test_live_markets_endpoint_allows_empty_results(monkeypatch):
+def test_live_markets_endpoint_returns_empty_list_when_no_markets(monkeypatch):
     from apps.api.src.api.routers import markets
 
     monkeypatch.setattr(markets.market_service, "list_live", lambda: [])
