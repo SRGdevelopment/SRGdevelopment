@@ -19,4 +19,5 @@ def test_live_markets_endpoint():
     assert response.status_code == 200
     payload = response.json()
     assert isinstance(payload, list)
-    assert {market["id"] for market in payload} >= {"mkt_nba_001", "mkt_nba_002"}
+    assert payload
+    assert all(market["is_live"] is True for market in payload)
