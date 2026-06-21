@@ -1,14 +1,6 @@
 from fastapi import FastAPI
 
-from .api.routers import (
-    claims,
-    combos,
-    health,
-    integrity,
-    markets,
-    media,
-    recommendations,
-)
+from .api.routers import claims, combos, health, integrity, markets, media, recommendations
 
 app = FastAPI(title="Kalshi Sports App API")
 app.include_router(health.router)

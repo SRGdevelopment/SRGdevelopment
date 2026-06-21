@@ -21,6 +21,11 @@ def test_live_markets_endpoint():
     assert isinstance(payload, list)
     assert payload
     assert all(market["is_live"] is True for market in payload)
+    assert all(
+        {"id", "event", "side_a_price_cents", "side_b_price_cents", "liquidity", "volatility", "is_live"}
+        <= market.keys()
+        for market in payload
+    )
 
 
 def test_live_markets_endpoint_allows_empty_results(monkeypatch):
